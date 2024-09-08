@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:14' // Using a Node.js Docker image which includes npm
+            args '-u root:root' // Run as root user for installing global npm packages
+        }
+    }
 
     tools {
         // Define the Maven version to use
@@ -16,7 +21,7 @@ pipeline {
 
         stage('Install Snyk') {
             steps {
-                sh 'npm install -g snyk'
+                sh 'npm install -g snyk' // Installing Snyk globally
             }
         }
 
