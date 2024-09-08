@@ -36,9 +36,9 @@ pipeline {
                     
                     // Upload to S3 using AWS CLI
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                        sh '''
+                        sh """
                         aws s3 cp ${sonarReportFile} s3://securityreports1337/reports/sonar/ --region us-west-1
-                        '''
+                        """
                     }
                 }
             }
@@ -58,9 +58,9 @@ pipeline {
 
                     // Upload to S3 using AWS CLI
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                        sh '''
+                        sh """
                         aws s3 cp ${snykReportFile} s3://securityreports1337/reports/snyk/ --region us-west-1
-                        '''
+                        """
                     }
                 }
             }
@@ -115,9 +115,9 @@ pipeline {
 
                     // Upload to S3 using AWS CLI
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                        sh '''
+                        sh """
                         aws s3 cp ${zapReportFile} s3://securityreports1337/reports/zap/ --region us-west-1
-                        '''
+                        """
                     }
                 }
             }
