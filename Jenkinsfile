@@ -4,7 +4,7 @@ pipeline {
     tools {
         // Define the Maven version to use
         maven 'Maven_3.2.5'
-    }
+    } 
 
     stages {
         stage('Clone Repository') {
