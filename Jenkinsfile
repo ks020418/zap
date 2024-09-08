@@ -5,15 +5,18 @@ pipeline {
         stage('Upload Test File to S3') {
             steps {
                 script {
-                    // Create a test file
+                    // Define file name and content
                     def testFileName = "test_file.txt"
-                    writeFile file: testFileName, text: 'This is a test file for S3 upload.'
+                    def testFileContent = "This is a test file for S3 upload."
+                    
+                    // Create a test file
+                    writeFile file: testFileName, text: testFileContent
 
                     // Upload the test file to S3
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                        sh '''
+                        sh """
                         aws s3 cp ${testFileName} s3://securityreports1337/reports/test/ --region us-west-1
-                        '''
+                        """
                     }
                 }
             }
