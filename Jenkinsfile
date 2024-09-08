@@ -15,12 +15,17 @@ pipeline {
         }
 
         stage('Compile and Run Sonar Analysis') {
-            sh '''
-    mvn clean verify sonar:sonar \
-        -Dsonar.projectKey=asgbuggywebapp1337 \
-        -Dsonar.organization=asgbuggywebapp1337 \
-        -Dsonar.host.url=https://sonarcloud.io \
-        -Dsonar.token=${SONAR_TOKEN}'''
+            steps {
+                script {
+                    sh '''
+                    mvn clean verify sonar:sonar \
+                        -Dsonar.projectKey=asgbuggywebapp1337 \
+                        -Dsonar.organization=asgbuggywebapp1337 \
+                        -Dsonar.host.url=https://sonarcloud.io \
+                        -Dsonar.token=${SONAR_TOKEN}
+                    '''
+                }
+            }
         }
 
         stage('Run SCA Analysis Using Snyk') {
@@ -52,7 +57,7 @@ pipeline {
             }
         }
 
-        stage('Kubernetes Deployment of ASG Bugg Web Application') {
+        stage('Kubernetes Deployment of ASG Buggy Web Application') {
             steps {
                 withKubeConfig([credentialsId: 'kubelogin']) {
                     sh 'kubectl delete all --all -n devsecops'
@@ -61,19 +66,24 @@ pipeline {
             }
         }
 
-        stage('wait_for_testing') {
+        stage('Wait for Testing') {
             steps {
-                sh 'pwd; sleep 180; echo "Application Has been deployed on K8S"'
+                sh 'pwd; sleep 180; echo "Application has been deployed on K8S"'
             }
         }
 
         stage('Run DAST Using ZAP') {
             steps {
                 withKubeConfig([credentialsId: 'kubelogin']) {
-                    sh '''
-                    zap.sh -cmd -quickurl http://$(kubectl get services/asgbuggy --namespace=devsecops -o json | jq -r ".status.loadBalancer.ingress[] | .hostname") -quickprogress -quickout ${WORKSPACE}/zap_report.html
-                    '''
-                    archiveArtifacts artifacts: 'zap_report.html'
+                    script {
+                        def timestamp = new Date().format("ddMMMyyyy_HHmmss", TimeZone.getTimeZone("UTC"))
+                        def zapReportFile = "zap_report_${timestamp}.html"
+
+                        sh '''
+                        zap.sh -cmd -quickurl http://$(kubectl get services/asgbuggy --namespace=devsecops -o json | jq -r ".status.loadBalancer.ingress[] | .hostname") -quickprogress -quickout ${WORKSPACE}/zap_report.html
+                        '''
+                        archiveArtifacts artifacts: zapReportFile
+                    }
                 }
             }
         }
