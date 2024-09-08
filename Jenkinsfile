@@ -36,9 +36,9 @@ pipeline {
                     
                     // Upload to S3 using AWS CLI
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                        sh """
+                        sh '''
                         aws s3 cp ${sonarReportFile} s3://securityreports1337/reports/sonar/ --region us-west-1
-                        """
+                        '''
                     }
                 }
             }
@@ -50,19 +50,17 @@ pipeline {
                     def timestamp = new Date().format("ddMMMyyyy_HHmmss", TimeZone.getTimeZone("UTC"))
                     def snykReportFile = "snyk_report_${timestamp}.json"
 
-                    // Use Snyk token for SCA analysis
+                    // Run Snyk SCA scan and generate report
                     withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
                         sh 'mvn snyk:test -fn'
+                        sh "snyk test --json > ${snykReportFile}"
                     }
-
-                    // Generate and save Snyk report
-                    sh "snyk monitor --json > ${snykReportFile}"
 
                     // Upload to S3 using AWS CLI
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                        sh """
+                        sh '''
                         aws s3 cp ${snykReportFile} s3://securityreports1337/reports/snyk/ --region us-west-1
-                        """
+                        '''
                     }
                 }
             }
@@ -117,9 +115,9 @@ pipeline {
 
                     // Upload to S3 using AWS CLI
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                        sh """
+                        sh '''
                         aws s3 cp ${zapReportFile} s3://securityreports1337/reports/zap/ --region us-west-1
-                        """
+                        '''
                     }
                 }
             }
