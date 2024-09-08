@@ -21,7 +21,7 @@ pipeline {
 
         stage('Install Snyk') {
             steps {
-                sh 'npm install -g snyk' // Installing Snyk globally
+                sh 'npm install -g snyk --unsafe-perm' // Installing Snyk globally
             }
         }
 
