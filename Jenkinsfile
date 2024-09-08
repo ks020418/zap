@@ -19,8 +19,8 @@ pipeline {
                 script {
                     def timestamp = new Date().format("ddMMMyyyy_HHmmss", TimeZone.getTimeZone("UTC"))
                     def sonarReportFile = "sonar_report_${timestamp}.html"
-
-                    // Run SonarQube analysis with credentials
+                    
+                    // Running Maven build and SonarQube analysis
                     withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                         sh '''
                         mvn clean verify sonar:sonar \
@@ -30,18 +30,16 @@ pipeline {
                             -Dsonar.token=${SONAR_TOKEN}
                         '''
                     }
-
-                    // Archive SonarQube report
-                    sh "curl -o ${sonarReportFile} https://sonarcloud.io/api/measures/component?component=asgbuggywebapp1337&metricKeys=alert_status"
-
-                    // Upload to S3
-                    // s3Upload(file: sonarReportFile, bucket: 'securityreports1337', path: 'reports/sonar/')
-                    s3Upload(
-                        bucket: 'securityreports1337',
-                        includePathPattern: 'path/to/report/*',
-                        workingDir: 'path_to_reports',
-                        path: 'reports/sonar/'
-                    )
+                    
+                    // Download and save SonarQube report
+                    sh "curl -o ${sonarReportFile} 'https://sonarcloud.io/api/measures/component?component=asgbuggywebapp1337'"
+                    
+                    // Upload to S3 using AWS CLI
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                        sh '''
+                        aws s3 cp ${sonarReportFile} s3://securityreports1337/reports/sonar/ --region us-west-1
+                        '''
+                    }
                 }
             }
         }
@@ -50,18 +48,22 @@ pipeline {
             steps {
                 script {
                     def timestamp = new Date().format("ddMMMyyyy_HHmmss", TimeZone.getTimeZone("UTC"))
-                    def snykReportFile = "snyk_report_${timestamp}.html"
+                    def snykReportFile = "snyk_report_${timestamp}.json"
 
                     // Use Snyk token for SCA analysis
                     withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
                         sh 'mvn snyk:test -fn'
                     }
 
-                    // Archive Snyk report
+                    // Generate and save Snyk report
                     sh "snyk monitor --json > ${snykReportFile}"
 
-                    // Upload to S3
-                    s3Upload(file: snykReportFile, bucket: 'securityreports1337', path: 'reports/snyk/')
+                    // Upload to S3 using AWS CLI
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                        sh '''
+                        aws s3 cp ${snykReportFile} s3://securityreports1337/reports/snyk/ --region us-west-1
+                        '''
+                    }
                 }
             }
         }
@@ -111,9 +113,13 @@ pipeline {
                         sh '''
                         zap.sh -cmd -quickurl http://$(kubectl get services/asgbuggy --namespace=devsecops -o json | jq -r ".status.loadBalancer.ingress[] | .hostname") -quickprogress -quickout ${WORKSPACE}/${zapReportFile}
                         '''
+                    }
 
-                        // Upload ZAP report to S3
-                        s3Upload(file: zapReportFile, bucket: 'securityreports1337', path: 'reports/zap/')
+                    // Upload to S3 using AWS CLI
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                        sh '''
+                        aws s3 cp ${zapReportFile} s3://securityreports1337/reports/zap/ --region us-west-1
+                        '''
                     }
                 }
             }
