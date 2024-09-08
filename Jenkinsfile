@@ -35,7 +35,13 @@ pipeline {
                     sh "curl -o ${sonarReportFile} https://sonarcloud.io/api/measures/component?component=asgbuggywebapp1337&metricKeys=alert_status"
 
                     // Upload to S3
-                    s3Upload(file: sonarReportFile, bucket: 'securityreports1337', path: 'reports/sonar/')
+                    // s3Upload(file: sonarReportFile, bucket: 'securityreports1337', path: 'reports/sonar/')
+                    s3Upload(
+                        bucket: 'securityreports1337',
+                        includePathPattern: 'path/to/report/*',
+                        workingDir: 'path_to_reports',
+                        path: 'reports/sonar/'
+                    )
                 }
             }
         }
