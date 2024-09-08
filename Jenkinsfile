@@ -14,6 +14,12 @@ pipeline {
             }
         }
 
+        stage('Install Snyk') {
+            steps {
+                sh 'npm install -g snyk'
+            }
+       
+
         stage('Compile and Run Sonar Analysis') {
             steps {
                 script {
