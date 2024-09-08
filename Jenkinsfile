@@ -15,16 +15,12 @@ pipeline {
         }
 
         stage('Compile and Run Sonar Analysis') {
-            steps {
-                // Running Maven build and SonarQube analysis
-                sh '''
-                mvn clean verify sonar:sonar \
-                    -Dsonar.projectKey=asgbuggywebapp1337 \
-                    -Dsonar.organization=asgbuggywebapp1337 \
-                    -Dsonar.host.url=https://sonarcloud.io \
-                    -Dsonar.token=aad5138b3f8de18a560ac65e8e33e9e2063a0254
-                '''
-            }
+            sh '''
+    mvn clean verify sonar:sonar \
+        -Dsonar.projectKey=asgbuggywebapp1337 \
+        -Dsonar.organization=asgbuggywebapp1337 \
+        -Dsonar.host.url=https://sonarcloud.io \
+        -Dsonar.token=${SONAR_TOKEN}'''
         }
 
         stage('Run SCA Analysis Using Snyk') {
